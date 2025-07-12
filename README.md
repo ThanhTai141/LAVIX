@@ -1,36 +1,142 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MindX - Nền tảng giáo dục gamified với AI Chatbot
+ 
+Dự án gồm 2 phần:
+- **Frontend:** Next.js (React), giao diện hiện đại, UX tốt, hỗ trợ chat AI, upload file, quản lý bạn bè, profile, portal học tập.
+- **Backend:** Express.js (TypeScript), API bảo mật JWT, lưu lịch sử chat, xác thực, upload file, tích hợp Google Gemini.
 
-## Getting Started
+---
 
-First, run the development server:
+## 1. Cấu trúc thư mục
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```
+mindx/
+├── backend/           # Backend Express.js + TypeScript
+│   ├── controllers/   # Controllers (auth, chat)
+│   ├── dist/          # File build
+│   ├── middlewares/   # Middleware (auth, upload file)
+│   ├── models/        # Mongoose models (User, ChatHistory)
+│   ├── routes/        # API routes (auth, gemini)
+│   ├── services/      # Chat service (Google Gemini)
+│   ├── utils/         # Tiện ích (logger, sendEmail)
+│   ├── server.ts      # Khởi tạo server Express
+│   ├── package.json   # Thư viện backend
+│   └── ...            
+├── src/               # Frontend Next.js (React)
+│   ├── app/           # App directory (Next.js 13+)
+│   │   ├── AIChatbox/ # Trang chat AI
+│   │   ├── portal/    # Portal học tập
+│   │   ├── profile/   # Trang cá nhân
+│   │   ├── landing/   # Trang landing
+│   │   ├── contexts/  # React context (Auth)
+│   │   ├── store/     # Redux store
+│   │   ├── components/# UI components
+│   │   └── ...
+│   ├── components/    # Component chung
+│   ├── utils/         # Tiện ích frontend
+│   ├── package.json   # Thư viện frontend
+│   └── ...
+├── README.md
+└── ...
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 2. Tính năng chính
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Frontend (Next.js)
+- Đăng ký, đăng nhập, xác thực JWT
+- Chat AI với Google Gemini (text, upload file PDF/JPG/PNG/TXT ≤ 5MB)
+- Lưu và hiển thị lịch sử chat
+- Giao diện đẹp, responsive, UX tốt
+- Quản lý bạn bè, profile, portal học tập
+- Button "Chat mới" để reset session AI
 
-## Learn More
+### Backend (Express.js)
+- API xác thực (JWT), quản lý user
+- API chat với Google Gemini (text + file)
+- Lưu lịch sử chat vào MongoDB
+- Middleware upload file (multer), validate định dạng/kích thước
+- Logging (winston)
+- Gửi email (nodemailer)
+- Bảo mật CORS, rate-limit
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 3. Cài đặt & chạy dự án
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Yêu cầu:
+- Node.js >= 18
+- MongoDB
 
-## Deploy on Vercel
+### Cài đặt
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+# Cài frontend
+cd mindx
+npm install
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+# Cài backend
+cd backend
+npm install
+```
+
+### Chạy development
+
+```bash
+# Chạy backend (dev mode)
+cd backend
+npm run dev
+
+# Chạy frontend
+cd ..
+npm run dev
+```
+
+### Build production
+
+```bash
+# Build backend
+cd backend
+npm run build
+
+# Start backend
+npm start
+
+# Build frontend
+cd ..
+npm run build
+npm start
+```
+
+---
+
+## 4. API chính
+
+- `POST /api/auth/register` - Đăng ký
+- `POST /api/auth/login` - Đăng nhập
+- `POST /api/gemini/chat` - Chat AI (text)
+- `POST /api/gemini/chat-with-file` - Chat AI (kèm file)
+- `POST /api/gemini/new-chat` - Tạo đoạn chat mới (reset session)
+- `GET /api/gemini/history` - Lấy lịch sử chat
+
+---
+
+## 5. Công nghệ sử dụng
+
+- **Frontend:** Next.js, React, Redux Toolkit, TailwindCSS, Heroicons, Axios
+- **Backend:** Express.js, TypeScript, Mongoose, Multer, Winston, Nodemailer, Google Gemini API
+
+---
+
+## 6. Đóng góp & phát triển
+
+- Fork, tạo branch mới, PR
+- Đóng góp UI/UX, tính năng mới, tối ưu code
+- Báo lỗi qua Issues
+
+---
+
+## 7. Liên hệ
+
+- Email: [your-email@example.com]
+- MindX Team
