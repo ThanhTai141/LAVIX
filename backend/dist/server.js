@@ -60,6 +60,25 @@ io.on('connection', (socket) => {
         // Emit lại cho người gửi (xác nhận gửi thành công)
         // socket.emit('message_sent', msg);
     });
+    // Thêm typing indicator events (không ảnh hưởng chức năng cũ)
+    socket.on('typing_start', (data) => {
+        const { from, to } = data;
+        if (!from || !to)
+            return;
+        const toSocketId = onlineUsers.get(to);
+        if (toSocketId) {
+            io.to(toSocketId).emit('user_typing_start', { from, to });
+        }
+    });
+    socket.on('typing_stop', (data) => {
+        const { from, to } = data;
+        if (!from || !to)
+            return;
+        const toSocketId = onlineUsers.get(to);
+        if (toSocketId) {
+            io.to(toSocketId).emit('user_typing_stop', { from, to });
+        }
+    });
     socket.on('disconnect', async () => {
         if (userId) {
             await User.findByIdAndUpdate(userId, { isOnline: false, lastSeen: new Date() }, { new: true }).exec();

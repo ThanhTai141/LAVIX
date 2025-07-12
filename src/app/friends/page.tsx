@@ -8,7 +8,7 @@ import { useSearch } from './hooks/useSearch';
 import { Sidebar } from './components/Sidebar';
 import { ChatWindow } from './components/ChatWindow';
 import { ErrorMessage } from './components/ErrorMessage';
-import { DebugInfo } from './components/DebugInfo';
+// import { DebugInfo } from './components/DebugInfo';
 import type { TabType, User } from '../../shared/types/chat';
 
 const FriendsPage: React.FC = () => {
@@ -18,7 +18,7 @@ const FriendsPage: React.FC = () => {
   // State management
   const [activeTab, setActiveTab] = useState<TabType>('friends');
   const [selectedFriend, setSelectedFriend] = useState<User | null>(null);
-  const [showDebug, setShowDebug] = useState(false);
+  // const [showDebug, setShowDebug] = useState(false);
 
   // Custom hooks
   const {
@@ -37,6 +37,9 @@ const FriendsPage: React.FC = () => {
     sendMessage,
     selectFriend,
     getCurrentChat,
+    isFriendTyping,
+    sendTypingStart,
+    sendTypingStop,
   } = useChat(userId);
 
   const {
@@ -101,6 +104,9 @@ const FriendsPage: React.FC = () => {
         messages={currentMessages}
         onSendMessage={sendMessage}
         isLoading={chatLoading}
+        isFriendTyping={isFriendTyping}
+        sendTypingStart={sendTypingStart}
+        sendTypingStop={sendTypingStop}
       />
 
       {/* Error Display */}
@@ -109,19 +115,19 @@ const FriendsPage: React.FC = () => {
       )}
 
       {/* Debug Info */}
-      <DebugInfo
+      {/* <DebugInfo
         selectedFriend={selectedFriend?.id || null}
         messages={currentMessages}
         isVisible={showDebug}
-      />
+      /> */}
 
       {/* Debug Toggle Button */}
-      <button
+      {/* <button
         onClick={() => setShowDebug(!showDebug)}
         className="fixed top-4 right-4 bg-gray-800 text-white px-3 py-1 rounded text-xs z-50"
       >
         {showDebug ? 'Hide Debug' : 'Show Debug'}
-      </button>
+      </button> */}
     </div>
   );
 };

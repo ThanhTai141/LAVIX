@@ -9,6 +9,8 @@ export const useChat = (userId: string | undefined) => {
   const [selectedFriend, setSelectedFriend] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isFriendTyping, setIsFriendTyping] = useState(false);
+  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const socketRef = useRef<Socket | null>(null);
   const { addOptimisticMessage, generateClientMessageId } = useOptimisticUpdates();
 
@@ -23,6 +25,22 @@ export const useChat = (userId: string | undefined) => {
     });
     socketRef.current = socket;
 
+    // Typing indicator events
+    socket.on('user_typing_start', (data: { from: string; to: string }) => {
+      if (selectedFriend && data.from === selectedFriend) {
+        setIsFriendTyping(true);
+        // Auto-hide after 3s nếu không có stop event
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => setIsFriendTyping(false), 3000);
+      }
+    });
+    socket.on('user_typing_stop', (data: { from: string; to: string }) => {
+      if (selectedFriend && data.from === selectedFriend) {
+        setIsFriendTyping(false);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      }
+    });
+
     // Handle incoming messages (chỉ cho người nhận)
     socket.on('receive_message', (msg: { _id: string; from: string; to: string; content: string; timestamp: string; clientMessageId?: string }) => {
       console.log('Received message:', msg);
@@ -32,11 +50,12 @@ export const useChat = (userId: string | undefined) => {
         setChats(prev => {
           const friendId = msg.from;
           const idx = prev.findIndex(chat => chat.friendId === friendId);
-          const newMsg: Message = {
+          const newMsg: Message & { clientMessageId?: string } = {
             id: msg._id,
             text: msg.content,
             sender: 'friend',
             timestamp: new Date(msg.timestamp).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+            clientMessageId: msg.clientMessageId
           };
 
           if (idx !== -1) {
@@ -72,7 +91,7 @@ export const useChat = (userId: string | undefined) => {
     return () => {
       socket.disconnect();
     };
-  }, [userId]);
+  }, [userId, selectedFriend]);
 
   // Fetch chat history
   const fetchChatHistory = useCallback(async (friendId: string) => {
@@ -122,11 +141,13 @@ export const useChat = (userId: string | undefined) => {
       // Update UI immediately
       setChats(prev => {
         const idx = prev.findIndex(chat => chat.friendId === selectedFriend);
-        const optimisticMsg: Message = {
+        const optimisticMsg: Message & { isOptimistic?: boolean; clientMessageId?: string } = {
           id: optimisticId,
           text: content.trim(),
           sender: 'me',
           timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+          isOptimistic: true,
+          clientMessageId: clientMessageId
         };
 
         if (idx !== -1) {
@@ -163,6 +184,18 @@ export const useChat = (userId: string | undefined) => {
     fetchChatHistory(friendId);
   }, [fetchChatHistory]);
 
+  // Typing indicator: send start
+  const sendTypingStart = useCallback((to: string) => {
+    if (!userId || !socketRef.current) return;
+    socketRef.current.emit('typing_start', { from: userId, to });
+  }, [userId]);
+
+  // Typing indicator: send stop
+  const sendTypingStop = useCallback((to: string) => {
+    if (!userId || !socketRef.current) return;
+    socketRef.current.emit('typing_stop', { from: userId, to });
+  }, [userId]);
+
   // Get current chat messages
   const getCurrentChat = useCallback((): Message[] => {
     if (!selectedFriend) return [];
@@ -179,5 +212,8 @@ export const useChat = (userId: string | undefined) => {
     selectFriend,
     getCurrentChat,
     setSelectedFriend,
+    isFriendTyping,
+    sendTypingStart,
+    sendTypingStop,
   };
 }; 

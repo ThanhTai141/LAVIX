@@ -8,6 +8,9 @@ interface ChatWindowProps {
   messages: Message[];
   onSendMessage: (content: string) => Promise<boolean>;
   isLoading?: boolean;
+  isFriendTyping?: boolean;
+  sendTypingStart?: (to: string) => void;
+  sendTypingStop?: (to: string) => void;
 }
 
 export const ChatWindow: React.FC<ChatWindowProps> = ({
@@ -15,24 +18,48 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
   messages,
   onSendMessage,
   isLoading = false,
+  isFriendTyping = false,
+  sendTypingStart,
+  sendTypingStop,
 }) => {
   const [messageInput, setMessageInput] = useState('');
   const [isSending, setIsSending] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const typingTimeout = useRef<NodeJS.Timeout | null>(null);
+  const isTyping = useRef(false);
 
   // Auto scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Typing indicator logic
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setMessageInput(e.target.value);
+    if (!selectedFriend || !sendTypingStart || !sendTypingStop) return;
+    if (!isTyping.current) {
+      sendTypingStart(selectedFriend.id);
+      isTyping.current = true;
+    }
+    if (typingTimeout.current) clearTimeout(typingTimeout.current);
+    typingTimeout.current = setTimeout(() => {
+      sendTypingStop(selectedFriend.id);
+      isTyping.current = false;
+    }, 1000);
+  };
+
   const handleSendMessage = async () => {
     if (!messageInput.trim() || isSending) return;
-    
     setIsSending(true);
     try {
       const success = await onSendMessage(messageInput);
       if (success) {
         setMessageInput('');
+        // Stop typing when message sent
+        if (selectedFriend && sendTypingStop) {
+          sendTypingStop(selectedFriend.id);
+          isTyping.current = false;
+        }
       }
     } finally {
       setIsSending(false);
@@ -120,6 +147,13 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
                 </div>
               </div>
             ))}
+            {/* Typing indicator */}
+            {isFriendTyping && (
+              <div className="flex items-center space-x-2 pl-2">
+                <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                <span className="text-xs text-gray-500 italic">Đối phương đang nhập...</span>
+              </div>
+            )}
             <div ref={messagesEndRef} />
           </>
         )}
@@ -131,7 +165,7 @@ export const ChatWindow: React.FC<ChatWindowProps> = ({
           <input
             type="text"
             value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
+            onChange={handleInputChange}
             onKeyPress={handleKeyPress}
             placeholder="Nhập tin nhắn..."
             className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
